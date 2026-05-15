@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Efficient Image Synthesis with Sphere Latent Encoder">
+  <title>Sphere Latent Encoder</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --paper: #ffffff;
+      --ink: #1d2430;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --green: #149b6f;
+      --green-soft: #e9f8f2;
+      --red: #d64545;
+      --red-soft: #fff0f0;
+      --shadow: 0 18px 60px rgba(16, 24, 40, 0.08);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 34rem),
+        radial-gradient(circle at 85% 0, rgba(20, 155, 111, 0.11), transparent 30rem),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(228, 231, 236, 0.78);
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0.8rem 1.25rem;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.95rem;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 3.2rem 1.25rem 5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 2.2rem 0 1.4rem;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      border-radius: 999px;
+      color: var(--blue);
+      background: rgba(255, 255, 255, 0.78);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.14;
+      letter-spacing: -0.04em;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin: 0 auto;
+      font-size: clamp(2rem, 5vw, 3.8rem);
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 4vw, 2.55rem);
+    }
+
+    h3 {
+      font-size: 1.12rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      max-width: 860px;
+      margin: 1.15rem auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+    }
+
+    .authors {
+      margin-top: 1.35rem;
+      font-size: clamp(1.18rem, 2.2vw, 1.42rem);
+    }
+
+    .affiliation {
+      margin-top: 0.35rem;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.65rem;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 2.7rem;
+      padding: 0.72rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 760;
+      box-shadow: 0 5px 20px rgba(16, 24, 40, 0.06);
+    }
+
+    .button[aria-disabled="true"] {
+      cursor: default;
+      text-decoration: none;
+    }
+
+    .button svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      flex: 0 0 auto;
+    }
+
+    .arxiv-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.45rem;
+      height: 1.15rem;
+      border-radius: 0.28rem;
+      color: #b31b1b;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: -0.07em;
+      background: #fff0f0;
+    }
+
+    .button.primary {
+      border-color: var(--blue);
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--blue), #1d4ed8);
+    }
+
+    .section {
+      margin-top: 3.5rem;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .card {
+      border: 1px solid rgba(228, 231, 236, 0.92);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card.pad {
+      padding: clamp(1.1rem, 3vw, 1.6rem);
+    }
+
+    .figure {
+      padding: 0.85rem;
+    }
+
+    .figure img {
+      width: 100%;
+      border-radius: calc(var(--radius) - 9px);
+      background: #fff;
+    }
+
+    .caption {
+      margin: 0.75rem 0.25rem 0.15rem;
+      color: var(--muted);
+      font-size: 0.94rem;
+      text-align: center;
+    }
+
+    .teaser-card {
+      display: grid;
+      gap: 0.95rem;
+    }
+
+    .dataset-slider {
+      --active-index: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      padding: 0.28rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .dataset-slider::before {
+      content: "";
+      position: absolute;
+      top: 0.28rem;
+      bottom: 0.28rem;
+      left: 0.28rem;
+      width: calc((100% - 0.56rem) / 3);
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 8px 22px rgba(16, 24, 40, 0.10);
+      transform: translateX(calc(var(--active-index) * 100%));
+      transition: transform 180ms ease;
+    }
+
+    .dataset-tab {
+      position: relative;
+      z-index: 1;
+      min-height: 2.5rem;
+      border: 0;
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .dataset-tab.active {
+      color: var(--ink);
+    }
+
+    .comparison-card {
+      display: grid;
+      gap: 0.95rem;
+    }
+
+    .comparison-slider {
+      --active-index: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+      padding: 0.28rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .comparison-slider::before {
+      content: "";
+      position: absolute;
+      top: 0.28rem;
+      bottom: 0.28rem;
+      left: 0.28rem;
+      width: calc((100% - 0.56rem) / 2);
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 8px 22px rgba(16, 24, 40, 0.10);
+      transform: translateX(calc(var(--active-index) * 100%));
+      transition: transform 180ms ease;
+    }
+
+    .comparison-tab {
+      position: relative;
+      z-index: 1;
+      min-height: 2.5rem;
+      border: 0;
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .comparison-tab.active {
+      color: var(--ink);
+    }
+
+    .ablation-card {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .ablation-slider {
+      --active-index: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      padding: 0.28rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .ablation-slider::before {
+      content: "";
+      position: absolute;
+      top: 0.28rem;
+      bottom: 0.28rem;
+      left: 0.28rem;
+      width: calc((100% - 0.56rem) / 5);
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 8px 22px rgba(16, 24, 40, 0.10);
+      transform: translateX(calc(var(--active-index) * 100%));
+      transition: transform 180ms ease;
+    }
+
+    .ablation-tab {
+      position: relative;
+      z-index: 1;
+      min-height: 2.5rem;
+      border: 0;
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .ablation-tab.active {
+      color: var(--ink);
+    }
+
+    .ablation-panel[hidden] {
+      display: none;
+    }
+
+    .factor-description {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.6;
+    }
+
+    .step-slider,
+    .autoencoder-slider {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .step-slide-head,
+    .autoencoder-slide-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .step-image-title,
+    .autoencoder-image-title {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+    }
+
+    .step-controls,
+    .step-dots,
+    .autoencoder-controls,
+    .autoencoder-dots {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .step-button,
+    .step-dot,
+    .autoencoder-button,
+    .autoencoder-dot {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .step-button,
+    .autoencoder-button {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      color: var(--ink);
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .step-dot,
+    .autoencoder-dot {
+      width: 0.58rem;
+      height: 0.58rem;
+      padding: 0;
+      border-radius: 999px;
+      background: #d0d5dd;
+      transition: width 160ms ease, background 160ms ease;
+    }
+
+    .step-dot.active,
+    .autoencoder-dot.active {
+      width: 1.35rem;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    .teaser-main {
+      border-radius: calc(var(--radius) - 9px);
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .teaser-main img,
+    .comparison-main img,
+    .step-image img,
+    .autoencoder-image img {
+      width: 100%;
+      transition: opacity 140ms ease;
+    }
+
+    .comparison-main,
+    .step-image,
+    .autoencoder-image {
+      border-radius: calc(var(--radius) - 9px);
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .qualitative-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .qualitative-slide-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .qualitative-slide-title {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+    }
+
+    .qualitative-controls {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0.8rem;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .qualitative-controls.side-controls {
+      inset: 0;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 0 0.15rem;
+      transform: translateY(-2.5%);
+    }
+
+    .qualitative-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.9rem;
+      height: 3.9rem;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(29, 36, 48, 0.62);
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.55rem;
+      line-height: 1;
+      pointer-events: auto;
+    }
+
+    .qualitative-button::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 2.55rem;
+      height: 2.55rem;
+      border: 1px solid rgba(228, 231, 236, 0.78);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.12);
+    }
+
+    .qualitative-count {
+      color: var(--muted);
+      font-weight: 800;
+      min-width: 3.4rem;
+      text-align: center;
+    }
+
+    .qualitative-item {
+      margin: 0;
+    }
+
+    .qualitative-grid {
+      position: relative;
+    }
+
+    .qualitative-grid img {
+      width: 100%;
+      border-radius: calc(var(--radius) - 9px);
+      background: #ffffff;
+    }
+
+    .qualitative-grid figcaption {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-bottom: 0.7rem;
+      padding: 0.25rem 0.62rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .pill.blue {
+      color: #1d4ed8;
+      background: var(--blue-soft);
+    }
+
+    .pill.green {
+      color: #087a56;
+      background: var(--green-soft);
+    }
+
+    .pill.red {
+      color: #b42318;
+      background: var(--red-soft);
+    }
+
+    .feature p,
+    .loss-section p {
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+    }
+
+    .loss-formulation {
+      display: grid;
+      gap: 1.1rem;
+    }
+
+    .loss-section {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .loss-section + .loss-section {
+      padding-top: 0.2rem;
+    }
+
+    .eq {
+      overflow-x: auto;
+      padding: 1rem;
+      border-radius: 18px;
+      background: #fbfcff;
+      border: 1px solid var(--line);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+
+    .compact-table {
+      min-width: 0;
+      font-size: 0.84rem;
+    }
+
+    .compact-table th,
+    .compact-table td {
+      padding: 0.55rem 0.58rem;
+    }
+
+    th,
+    td {
+      padding: 0.76rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    thead th {
+      color: #344054;
+      background: #f8fafc;
+      font-weight: 820;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .ours {
+      color: var(--green);
+      font-weight: 850;
+    }
+
+    .prior-method {
+      opacity: 0.45;
+    }
+
+    .table-group td {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .small-title {
+      margin: 0 0 0.7rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .footer {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 820px) {
+      .nav-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav-links {
+        justify-content: flex-start;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .grid-2,
+      .grid-3,
+      .qualitative-grid,
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dataset-slider {
+        border-radius: 18px;
+      }
+
+      .comparison-slider {
+        border-radius: 18px;
+      }
+
+      .ablation-slider {
+        grid-template-columns: repeat(2, 1fr);
+        border-radius: 18px;
+      }
+
+      .ablation-slider::before {
+        display: none;
+      }
+
+      .dataset-tab {
+        min-height: 2.25rem;
+        font-size: 0.86rem;
+      }
+
+      .comparison-tab {
+        min-height: 2.25rem;
+        font-size: 0.86rem;
+      }
+
+      .ablation-tab {
+        min-height: 2.25rem;
+        font-size: 0.82rem;
+      }
+
+      .ablation-tab.active {
+        background: #ffffff;
+        box-shadow: 0 8px 22px rgba(16, 24, 40, 0.10);
+      }
+
+      .step-slide-head,
+      .autoencoder-slide-head,
+      .qualitative-slide-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .page {
+        padding-top: 1.4rem;
+      }
+    }
+  </style>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]] },
+      svg: { fontCache: "global" }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <nav class="nav" aria-label="Page navigation">
+    <div class="nav-inner">
+      <a class="brand" href="#">Sphere Latent Encoder</a>
+      <div class="nav-links">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#ablations">Ablations</a>
+        <a href="#more-qualitative-results">Qualitative</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page">
+    <header class="hero">
+      <h1>Efficient Image Synthesis with Sphere Latent Encoder</h1>
+      <div class="authors">
+        <strong><a href="https://itsthanhtung.github.io/">Tung Do</a></strong> &nbsp;
+        <strong><a href="https://thuanz123.github.io/">Thuan Hoang Nguyen</a></strong> &nbsp;
+        <strong><a href="https://www.hao-li.com/Hao_Li/Hao_Li_-_about_me.html">Hao Li</a></strong>
+      </div>
+      <div class="affiliation">
+        Mohamed Bin Zayed University of Artificial Intelligence, UAE
+      </div>
+      <div class="actions">
+        <span class="button primary" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.09 3.29 9.4 7.86 10.93 0.58 0.1 0.79-0.25 0.79-0.56v-2.15c-3.2 0.7-3.87-1.36-3.87-1.36-0.52-1.33-1.28-1.68-1.28-1.68-1.04-0.71 0.08-0.7 0.08-0.7 1.15 0.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34 0.96 0.1-0.74 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.27-5.23-5.67 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.96-0.31 3.16 1.18 0.92-0.25 1.9-0.38 2.87-0.38s1.95 0.13 2.87 0.38c2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.73 0.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14v3.17c0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>
+          </svg>
+          Code (soon)
+        </span>
+        <a class="button" href="#" aria-label="arXiv link">
+          <span class="arxiv-mark" aria-hidden="true">arXiv</span>
+          arXiv
+        </a>
+      </div>
+    </header>
+
+    <section class="section" aria-label="Generated image samples">
+      <div class="card figure teaser-card">
+        <div class="dataset-slider" role="tablist" aria-label="Select teaser dataset">
+          <button
+            class="dataset-tab active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-index="0"
+            data-src="images/teaser/imagenet_4_steps.png"
+            data-alt="ImageNet generated samples from Sphere Latent Encoder"
+            data-caption="ImageNet-1K generated samples with 4-step sampling."
+          >
+            ImageNet-1K
+          </button>
+          <button
+            class="dataset-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-index="1"
+            data-src="images/teaser/afhq_4_steps.png"
+            data-alt="Animal-Faces generated samples from Sphere Latent Encoder"
+            data-caption="Animal-Faces generated samples with 4-step sampling."
+          >
+            Animal-Faces
+          </button>
+          <button
+            class="dataset-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-index="2"
+            data-src="images/teaser/of_4_steps.png"
+            data-alt="Oxford-Flowers generated samples from Sphere Latent Encoder"
+            data-caption="Oxford-Flowers generated samples with 4-step sampling."
+          >
+            Oxford-Flowers
+          </button>
+        </div>
+        <div class="teaser-main">
+          <img id="teaser-image" src="images/teaser/imagenet_4_steps.png" alt="ImageNet generated samples from Sphere Latent Encoder">
+        </div>
+        <p class="caption" id="teaser-caption">
+          ImageNet-1K generated samples with 4-step sampling.
+        </p>
+      </div>
+
+      <div class="card pad" style="margin-top: 1rem;">
+        <div class="qualitative-slide-head">
+          <h3 class="qualitative-slide-title" id="sixstep-title">6-step image generation on ImageNet-1K</h3>
+          <span class="qualitative-count" id="sixstep-count">1 / 5</span>
+        </div>
+        <div class="qualitative-grid">
+          <div class="qualitative-controls side-controls" aria-label="6-step qualitative result controls">
+            <button class="qualitative-button" id="sixstep-prev" type="button" aria-label="Previous 6-step qualitative slide">&lsaquo;</button>
+            <button class="qualitative-button" id="sixstep-next" type="button" aria-label="Next 6-step qualitative slide">&rsaquo;</button>
+          </div>
+          <figure class="qualitative-item">
+            <img id="sixstep-img-0" loading="lazy" src="images/appendix_6_steps/appendix_6.jpg" alt="class 0006: stingray">
+            <figcaption id="sixstep-caption-0">class 0006: stingray</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="sixstep-img-1" loading="lazy" src="images/appendix_6_steps/appendix_14.jpg" alt="class 0014: indigo bunting">
+            <figcaption id="sixstep-caption-1">class 0014: indigo bunting</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="sixstep-img-2" loading="lazy" src="images/appendix_6_steps/appendix_22.jpg" alt="class 0022: bald eagle, American eagle">
+            <figcaption id="sixstep-caption-2">class 0022: bald eagle, American eagle</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="sixstep-img-3" loading="lazy" src="images/appendix_6_steps/appendix_42.jpg" alt="class 0042: agama">
+            <figcaption id="sixstep-caption-3">class 0042: agama</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="abstract">
+      <div class="section-head">
+        <h2>Abstract</h2>
+      </div>
+      <div class="card pad">
+        <p>
+          Few-step image generation has seen rapid progress, with consistency and meanflow-based methods
+          significantly reducing the number of sampling steps. Despite their low inference cost, these
+          approaches often suffer from training instability and limited scalability. Sphere Encoder is a
+          recent alternative that produces high-quality images in only a few steps; however, it requires
+          repeated transitions between pixel space and latent space during inference while jointly optimizing
+          reconstruction and generation within a single architecture.
+        </p>
+        <p>
+          We decouple the framework into a fixed pretrained image encoder and a separate latent denoising model
+          trained entirely in a spherical latent space. This eliminates repeated pixel-space operations during
+          training and inference, improving efficiency and allowing reconstruction and generation to specialize
+          independently. On Animal-Faces, Oxford-Flowers, and ImageNet-1K, our method significantly outperforms
+          Sphere Encoder in generation quality and inference speed while remaining competitive with strong
+          few-step and multi-step baselines.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="comparison">
+      <div class="section-head">
+        <h2>Why Sphere Latent Encoder?</h2>
+      </div>
+      <div class="card figure">
+        <img src="images/intro/comparison.png" alt="Comparison between Sphere Encoder and Sphere Latent Encoder">
+        <p class="caption">
+          Left: Sphere Encoder repeatedly encodes and decodes during generation. Right: our method denoises only in latent space
+          and decodes once at the end.
+        </p>
+      </div>
+
+      <div class="grid-3" style="margin-top: 1rem;">
+        <article class="card pad feature">
+          <span class="pill blue">Decoupled</span>
+          <h3>Separate reconstruction and generation</h3>
+          <p>A pretrained RAE acts as a fixed image tokenizer, while a dedicated transformer learns latent denoising.</p>
+        </article>
+        <article class="card pad feature">
+          <span class="pill green">Efficient</span>
+          <h3>Denoising in latent space</h3>
+          <p>Sampling refines compact spherical latents directly, avoiding expensive pixel-space denoising at each step.</p>
+        </article>
+        <article class="card pad feature">
+          <span class="pill red">Stable</span>
+          <h3>No JVP objective</h3>
+          <p>The model learns direct denoising on the hypersphere instead of relying on first-order approximation losses.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="method">
+      <div class="section-head">
+        <h2>Method</h2>
+      </div>
+      <div class="card figure">
+        <img src="images/method/system.png" alt="Overview of the Sphere Latent Encoder training framework">
+        <p class="caption">
+          Training objective overview. Noisy spherical latents are denoised with reconstruction and consistency losses.
+        </p>
+      </div>
+
+      <div class="grid-2" style="margin-top: 1rem;">
+        <div class="card pad">
+          <p class="small-title">Latent denoising model</p>
+          <p>
+            A pretrained representation autoencoder maps an image \(x \in \mathbb{R}^{256 \times 256 \times 3}\)
+            to a latent \(z \in \mathbb{R}^{16 \times 16 \times 768}\). We corrupt the latent with Gaussian noise,
+            project it onto the hypersphere, and train a SiT-style transformer \(\mathcal{G}\) to predict the clean latent.
+          </p>
+        </div>
+        <div class="card pad">
+          <p class="small-title">Few-step latent sampling</p>
+          <p>
+            Sampling starts from Gaussian noise. Each step projects the current latent to the sphere, denoises it,
+            optionally applies classifier-free guidance, reprojects, and adds decayed noise. The decoder runs only once.
+          </p>
+        </div>
+      </div>
+
+      <div class="card pad loss-formulation" style="margin-top: 1rem;">
+        <p class="small-title">Training losses</p>
+
+        <div class="loss-section">
+          <p>
+            <strong>Reconstruction loss.</strong> Given a noisy spherical latent \(\mathbf{v}_{\text{noisy}}\),
+            the denoiser \(\mathcal{G}\) predicts a clean latent. We align this prediction with the clean RAE
+            latent \(\mathbf{z}\) using both an \(\ell_1\) distance and a cosine-similarity loss.
+          </p>
+          <div class="eq">
+            \[
+              \mathcal{L}_{\text{recon}} =
+              \left\| \mathcal{G}(\mathbf{v}_{\text{noisy}}) - \mathbf{z} \right\|_1
+              +
+              \mathcal{L}_{\text{cosine}}\left(
+                \mathcal{G}(\mathbf{v}_{\text{noisy}}), \mathbf{z}
+              \right)
+            \]
+          </div>
+        </div>
+
+        <div class="loss-section">
+          <p>
+            <strong>Consistency loss.</strong> We denoise two spherical latents from different noise levels:
+            \(\mathbf{v}_{\text{NOISY}}\) is more corrupted, while \(\mathbf{v}_{\text{noisy}}\) is less
+            corrupted. The lower-noise prediction is treated as a fixed target with stop-gradient
+            \(\mathrm{sg}(\cdot)\), encouraging high-noise predictions to match the cleaner prediction.
+          </p>
+          <div class="eq">
+            \[
+              \mathcal{L}_{\text{cons}} =
+              \left\|
+                \mathcal{G}(\mathbf{v}_{\text{NOISY}})
+                -
+                \mathrm{sg}\left(\mathcal{G}(\mathbf{v}_{\text{noisy}})\right)
+              \right\|_1
+              +
+              \mathcal{L}_{\text{cosine}}\left(
+                \mathcal{G}(\mathbf{v}_{\text{NOISY}}),
+                \mathrm{sg}\left(\mathcal{G}(\mathbf{v}_{\text{noisy}})\right)
+              \right)
+            \]
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="results">
+      <div class="section-head">
+        <h2>Few-step Generation Results</h2>
+      </div>
+
+      <div class="card figure comparison-card">
+        <div class="comparison-slider" role="tablist" aria-label="Select comparison method">
+          <button
+            class="comparison-tab active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-index="0"
+            data-src="images/exp/imagenet_4_steps_compare.png"
+            data-alt="Sphere Latent Encoder ImageNet four step qualitative samples"
+            data-caption="Ours, ImageNet-1K, 4-step generation."
+          >
+            Ours
+          </button>
+          <button
+            class="comparison-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-index="1"
+            data-src="images/exp/sphere_4_steps_compare.png"
+            data-alt="Sphere Encoder ImageNet four step qualitative samples"
+            data-caption="Sphere Encoder, ImageNet-1K, 4-step generation."
+          >
+            Sphere Encoder
+          </button>
+        </div>
+        <div class="comparison-main">
+          <img id="comparison-image" src="images/exp/imagenet_4_steps_compare.png" alt="Sphere Latent Encoder ImageNet four step qualitative samples">
+        </div>
+        <p class="caption" id="comparison-caption">Ours, ImageNet-1K, 4-step generation.</p>
+      </div>
+
+      <div style="margin-top: 1rem;">
+        <div class="card pad">
+          <p class="small-title">Animal-Faces and Oxford-Flowers</p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Data</th>
+                  <th>Param</th>
+                  <th>FID@2</th>
+                  <th>FID@4</th>
+                  <th>FID@6</th>
+                  <th>G@2</th>
+                  <th>G@4</th>
+                  <th>G@6</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Sphere Enc.</td>
+                  <td>AF</td>
+                  <td>642M</td>
+                  <td>19.29</td>
+                  <td>18.23</td>
+                  <td>17.97</td>
+                  <td>1965</td>
+                  <td>4554</td>
+                  <td>7144</td>
+                </tr>
+                <tr>
+                  <td class="ours">Ours</td>
+                  <td>AF</td>
+                  <td>130M</td>
+                  <td>10.63</td>
+                  <td>6.89</td>
+                  <td><strong>6.18</strong></td>
+                  <td><strong>302</strong></td>
+                  <td><strong>390</strong></td>
+                  <td><strong>478</strong></td>
+                </tr>
+                <tr>
+                  <td>Sphere Enc.</td>
+                  <td>OF</td>
+                  <td>948M</td>
+                  <td>16.60</td>
+                  <td>12.96</td>
+                  <td>12.26</td>
+                  <td>3932</td>
+                  <td>9118</td>
+                  <td>14300</td>
+                </tr>
+                <tr>
+                  <td class="ours">Ours</td>
+                  <td>OF</td>
+                  <td>130M</td>
+                  <td>12.22</td>
+                  <td>8.61</td>
+                  <td><strong>7.85</strong></td>
+                  <td><strong>390</strong></td>
+                  <td><strong>567</strong></td>
+                  <td><strong>743</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="caption">G = GFLOPs. Lower is better.</p>
+        </div>
+
+        <div class="grid-2" style="margin-top: 1rem;">
+          <div class="card pad">
+            <p class="small-title">ImageNet: 1-NFE + Sphere</p>
+            <div class="table-wrap">
+              <table class="compact-table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Param</th>
+                    <th>NFE</th>
+                    <th>FID</th>
+                    <th>CMMD</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="table-group prior-method">
+                    <td colspan="5">1-NFE diffusion / flow</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>MeanFlow-XL/2</td>
+                    <td>676M</td>
+                    <td>1</td>
+                    <td>3.43</td>
+                    <td>0.575</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>\(\alpha\)-Flow-XL/2+</td>
+                    <td>676M</td>
+                    <td>1</td>
+                    <td>2.58</td>
+                    <td>0.520</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>iMF-XL/2</td>
+                    <td>610M</td>
+                    <td>1</td>
+                    <td>1.72</td>
+                    <td>0.384</td>
+                  </tr>
+                  <tr class="table-group">
+                    <td colspan="5">Sphere models</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>Sphere Enc.</td>
+                    <td>1.3B</td>
+                    <td>\(4\times2\)</td>
+                    <td>4.02</td>
+                    <td>0.363</td>
+                  </tr>
+                  <tr>
+                    <td class="ours">Ours-XL/1</td>
+                    <td>675M</td>
+                    <td>\(4\times2\)</td>
+                    <td>2.25</td>
+                    <td><strong>0.144</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="ours">Ours-XL/1</td>
+                    <td>675M</td>
+                    <td>\(6\times2\)</td>
+                    <td><strong>2.11</strong></td>
+                    <td>0.147</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card pad">
+            <p class="small-title">ImageNet: Multi-NFE</p>
+            <div class="table-wrap">
+              <table class="compact-table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Param</th>
+                    <th>NFE</th>
+                    <th>FID</th>
+                    <th>CMMD</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="table-group prior-method">
+                    <td colspan="5">Multi-NFE diffusion / flow</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>SiT-XL/2 + REG</td>
+                    <td>675M</td>
+                    <td>\(250\times2\)</td>
+                    <td>1.36</td>
+                    <td>0.228</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>LightningDiT-XL/2</td>
+                    <td>675M</td>
+                    <td>\(250\times2\)</td>
+                    <td>1.35</td>
+                    <td>0.139</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>REPA-E</td>
+                    <td>675M</td>
+                    <td>\(250\times2\)</td>
+                    <td>1.15</td>
+                    <td>0.115</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>GAE</td>
+                    <td>675M</td>
+                    <td>\(250\times2\)</td>
+                    <td>1.13</td>
+                    <td>0.053</td>
+                  </tr>
+                  <tr class="prior-method">
+                    <td>RAE+DiT-XL</td>
+                    <td>839M</td>
+                    <td>\(50\times2\)</td>
+                    <td>1.13</td>
+                    <td>0.169</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="ablations">
+      <div class="section-head">
+        <h2>Ablation Studies</h2>
+      </div>
+
+      <div class="card pad ablation-card">
+        <div class="ablation-slider" role="tablist" aria-label="Select ablation factor">
+          <button class="ablation-tab active" type="button" role="tab" aria-selected="true" data-index="0" data-factor="noise">Noise</button>
+          <button class="ablation-tab" type="button" role="tab" aria-selected="false" data-index="1" data-factor="loss">Loss</button>
+          <button class="ablation-tab" type="button" role="tab" aria-selected="false" data-index="2" data-factor="projection">Projection</button>
+          <button class="ablation-tab" type="button" role="tab" aria-selected="false" data-index="3" data-factor="steps">Steps</button>
+          <button class="ablation-tab" type="button" role="tab" aria-selected="false" data-index="4" data-factor="autoencoder">Autoencoder</button>
+        </div>
+
+        <div class="ablation-panel" data-panel="noise">
+          <p class="factor-description">
+            We compare noise schedules for sampling \(\sigma\) and \(\sigma_{sub}\). A stronger log-normal schedule improves coverage of noisy spherical latents and gives the best ImageNet-100 FID.
+          </p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Setting</th>
+                  <th>FID</th>
+                  <th>Impr.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>IN-100</td><td>Baseline</td><td>6.43</td><td class="muted">-</td></tr>
+                <tr><td>IN-100</td><td>Uniform</td><td>5.79</td><td class="ours">10.0%</td></tr>
+                <tr><td>IN-100</td><td>LogNorm \(-0.4, 1.0\)</td><td>5.56</td><td class="ours">13.5%</td></tr>
+                <tr><td>IN-100</td><td>LogNorm \(+0.4, 1.0\)</td><td><strong>5.31</strong></td><td class="ours">17.4%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="ablation-panel" data-panel="loss" hidden>
+          <p class="factor-description">
+            We study how reconstruction and consistency objectives contribute to denoising. Consistency strongly improves FID, while the additional latent consistency term is less effective after fine-tuning.
+          </p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Setting</th>
+                  <th>FID</th>
+                  <th>Impr.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>IN-100</td><td>R</td><td>8.97</td><td class="muted">-</td></tr>
+                <tr><td>IN-100</td><td>R + C</td><td>5.31</td><td class="ours">40.8%</td></tr>
+                <tr><td>IN-100</td><td>R + C + L*</td><td>4.82</td><td class="ours">46.3%</td></tr>
+                <tr><td>IN-100</td><td>R + C*</td><td><strong>4.68</strong></td><td class="ours">47.8%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="caption">R = reconstruction, C = consistency, L = latent consistency. * continued fine-tuning.</p>
+        </div>
+
+        <div class="ablation-panel" data-panel="projection" hidden>
+          <p class="factor-description">
+            Spherical projection is essential. Removing the spherify operation causes the denoiser to fail, showing that the structured hyperspherical latent space is central to the method.
+          </p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Setting</th>
+                  <th>FID</th>
+                  <th>Impr.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>IN-100</td><td>w/o spherify</td><td>89.68</td><td class="muted">-</td></tr>
+                <tr><td>IN-100</td><td>w/ spherify</td><td><strong>4.68</strong></td><td class="ours">1816.2%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="ablation-panel" data-panel="steps" hidden>
+          <p class="factor-description">
+            Sampling quality improves as the denoising process is repeated. Most of the gain appears from 2 to 4 steps, with smaller but still visible improvement at 8 steps.
+          </p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Steps</th>
+                  <th>FID</th>
+                  <th>Impr.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>IN-100</td><td>2</td><td>12.47</td><td class="muted">-</td></tr>
+                <tr><td>IN-100</td><td>4</td><td>4.90</td><td class="ours">60.7%</td></tr>
+                <tr><td>IN-100</td><td>8</td><td><strong>4.13</strong></td><td class="ours">66.9%</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="step-slider">
+            <div class="step-slide-head">
+              <h3 class="step-image-title" id="step-image-title">2-step sampling</h3>
+              <div class="step-controls" aria-label="Sampling step image controls">
+                <button class="step-button" id="step-prev" type="button" aria-label="Previous step image">&lsaquo;</button>
+                <div class="step-dots">
+                  <button class="step-dot active" type="button" data-index="0" aria-label="Show 2-step samples"></button>
+                  <button class="step-dot" type="button" data-index="1" aria-label="Show 4-step samples"></button>
+                  <button class="step-dot" type="button" data-index="2" aria-label="Show 8-step samples"></button>
+                </div>
+                <button class="step-button" id="step-next" type="button" aria-label="Next step image">&rsaquo;</button>
+              </div>
+            </div>
+            <div class="step-image">
+              <img id="step-image" src="images/exp/ablate_2_steps.png" alt="ImageNet-100 samples with 2-step sampling">
+            </div>
+            <p class="caption" id="step-caption">FID 12.47. Increasing sampling steps improves fidelity.</p>
+          </div>
+        </div>
+
+        <div class="ablation-panel" data-panel="autoencoder" hidden>
+          <p class="factor-description">
+            The latent tokenizer strongly affects generation. RAE provides semantically rich, high-dimensional latents, producing much better samples than compact VAE-style representations.
+          </p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Setting</th>
+                  <th>FID</th>
+                  <th>Impr.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>AF</td><td>FLUX VAE</td><td>172.25</td><td class="muted">-</td></tr>
+                <tr><td>AF</td><td>GAE</td><td>23.26</td><td class="ours">86.5%</td></tr>
+                <tr><td>AF</td><td>RAE</td><td><strong>10.63</strong></td><td class="ours">93.8%</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="autoencoder-slider">
+            <div class="autoencoder-slide-head">
+              <h3 class="autoencoder-image-title" id="autoencoder-image-title">FLUX VAE</h3>
+              <div class="autoencoder-controls" aria-label="Autoencoder image controls">
+                <button class="autoencoder-button" id="autoencoder-prev" type="button" aria-label="Previous autoencoder image">&lsaquo;</button>
+                <div class="autoencoder-dots">
+                  <button class="autoencoder-dot active" type="button" data-index="0" aria-label="Show FLUX VAE samples"></button>
+                  <button class="autoencoder-dot" type="button" data-index="1" aria-label="Show GAE samples"></button>
+                  <button class="autoencoder-dot" type="button" data-index="2" aria-label="Show RAE samples"></button>
+                </div>
+                <button class="autoencoder-button" id="autoencoder-next" type="button" aria-label="Next autoencoder image">&rsaquo;</button>
+              </div>
+            </div>
+            <div class="autoencoder-image">
+              <img id="autoencoder-image" src="images/exp/ablate_vae_flux.png" alt="Animal-Faces samples using FLUX VAE">
+            </div>
+            <p class="caption" id="autoencoder-caption">FID 172.25. Low-dimensional VAE latents produce weak samples.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="more-qualitative-results">
+      <div class="section-head">
+        <h2>More Qualitative Results</h2>
+      </div>
+
+      <div class="card pad">
+        <div class="qualitative-slide-head">
+          <h3 class="qualitative-slide-title" id="qualitative-title">4-step samples</h3>
+          <span class="qualitative-count" id="qualitative-count">1 / 5</span>
+        </div>
+        <div class="qualitative-grid">
+          <div class="qualitative-controls side-controls" aria-label="Qualitative result controls">
+            <button class="qualitative-button" id="qualitative-prev" type="button" aria-label="Previous qualitative slide">&lsaquo;</button>
+            <button class="qualitative-button" id="qualitative-next" type="button" aria-label="Next qualitative slide">&rsaquo;</button>
+          </div>
+          <figure class="qualitative-item">
+            <img id="qualitative-img-0" loading="lazy" src="images/appendix/appendix_2.jpg" alt="class 0002: great white shark, white shark">
+            <figcaption id="qualitative-caption-0">class 0002: great white shark, white shark</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="qualitative-img-1" loading="lazy" src="images/appendix/appendix_15.jpg" alt="class 0015: robin, American robin">
+            <figcaption id="qualitative-caption-1">class 0015: robin, American robin</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="qualitative-img-2" loading="lazy" src="images/appendix/appendix_39.jpg" alt="class 0039: common iguana, iguana">
+            <figcaption id="qualitative-caption-2">class 0039: common iguana, iguana</figcaption>
+          </figure>
+          <figure class="qualitative-item">
+            <img id="qualitative-img-3" loading="lazy" src="images/appendix/appendix_88.jpg" alt="class 0088: macaw">
+            <figcaption id="qualitative-caption-3">class 0088: macaw</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Built as a static GitHub Pages project page. Figures and text are adapted from the accompanying manuscript.
+    </footer>
+  </main>
+  <script>
+    const teaserSlider = document.querySelector(".dataset-slider");
+    const teaserImage = document.querySelector("#teaser-image");
+    const teaserCaption = document.querySelector("#teaser-caption");
+
+    document.querySelectorAll(".dataset-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        teaserSlider.style.setProperty("--active-index", tab.dataset.index);
+
+        document.querySelectorAll(".dataset-tab").forEach((item) => {
+          item.classList.toggle("active", item === tab);
+          item.setAttribute("aria-selected", item === tab ? "true" : "false");
+        });
+
+        teaserImage.style.opacity = "0";
+        window.setTimeout(() => {
+          teaserImage.src = tab.dataset.src;
+          teaserImage.alt = tab.dataset.alt;
+          teaserCaption.textContent = tab.dataset.caption;
+          teaserImage.style.opacity = "1";
+        }, 120);
+      });
+    });
+
+    const comparisonSlider = document.querySelector(".comparison-slider");
+    const comparisonImage = document.querySelector("#comparison-image");
+    const comparisonCaption = document.querySelector("#comparison-caption");
+
+    document.querySelectorAll(".comparison-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        comparisonSlider.style.setProperty("--active-index", tab.dataset.index);
+
+        document.querySelectorAll(".comparison-tab").forEach((item) => {
+          item.classList.toggle("active", item === tab);
+          item.setAttribute("aria-selected", item === tab ? "true" : "false");
+        });
+
+        comparisonImage.style.opacity = "0";
+        window.setTimeout(() => {
+          comparisonImage.src = tab.dataset.src;
+          comparisonImage.alt = tab.dataset.alt;
+          comparisonCaption.textContent = tab.dataset.caption;
+          comparisonImage.style.opacity = "1";
+        }, 120);
+      });
+    });
+
+    const ablationSlider = document.querySelector(".ablation-slider");
+    const ablationPanels = document.querySelectorAll(".ablation-panel");
+
+    document.querySelectorAll(".ablation-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        ablationSlider.style.setProperty("--active-index", tab.dataset.index);
+
+        document.querySelectorAll(".ablation-tab").forEach((item) => {
+          item.classList.toggle("active", item === tab);
+          item.setAttribute("aria-selected", item === tab ? "true" : "false");
+        });
+
+        ablationPanels.forEach((panel) => {
+          panel.hidden = panel.dataset.panel !== tab.dataset.factor;
+        });
+      });
+    });
+
+    const stepSlides = [
+      {
+        title: "2-step sampling",
+        src: "images/exp/ablate_2_steps.png",
+        alt: "ImageNet-100 samples with 2-step sampling",
+        caption: "FID 12.47. Two steps capture coarse content but remain less detailed."
+      },
+      {
+        title: "4-step sampling",
+        src: "images/exp/ablate_4_steps.png",
+        alt: "ImageNet-100 samples with 4-step sampling",
+        caption: "FID 4.90. Four steps sharply improve sample fidelity."
+      },
+      {
+        title: "8-step sampling",
+        src: "images/exp/ablate_8_steps.png",
+        alt: "ImageNet-100 samples with 8-step sampling",
+        caption: "FID 4.13. Eight steps provide the best result with diminishing gains."
+      }
+    ];
+
+    let stepIndex = 0;
+    const stepTitle = document.querySelector("#step-image-title");
+    const stepImage = document.querySelector("#step-image");
+    const stepCaption = document.querySelector("#step-caption");
+    const stepDots = document.querySelectorAll(".step-dot");
+
+    function showStepSlide(index) {
+      stepIndex = (index + stepSlides.length) % stepSlides.length;
+      const slide = stepSlides[stepIndex];
+
+      stepImage.style.opacity = "0";
+      window.setTimeout(() => {
+        stepTitle.textContent = slide.title;
+        stepImage.src = slide.src;
+        stepImage.alt = slide.alt;
+        stepCaption.textContent = slide.caption;
+        stepDots.forEach((dot, dotIndex) => {
+          dot.classList.toggle("active", dotIndex === stepIndex);
+        });
+        stepImage.style.opacity = "1";
+      }, 120);
+    }
+
+    document.querySelector("#step-prev").addEventListener("click", () => {
+      showStepSlide(stepIndex - 1);
+    });
+
+    document.querySelector("#step-next").addEventListener("click", () => {
+      showStepSlide(stepIndex + 1);
+    });
+
+    stepDots.forEach((dot) => {
+      dot.addEventListener("click", () => {
+        showStepSlide(Number(dot.dataset.index));
+      });
+    });
+
+    const autoencoderSlides = [
+      {
+        title: "FLUX VAE",
+        src: "images/exp/ablate_vae_flux.png",
+        alt: "Animal-Faces samples using FLUX VAE",
+        caption: "FID 172.25. Low-dimensional VAE latents produce weak samples."
+      },
+      {
+        title: "GAE",
+        src: "images/exp/ablate_vae_gae.png",
+        alt: "Animal-Faces samples using GAE",
+        caption: "FID 23.26. Geometric latents improve structure but remain less sharp."
+      },
+      {
+        title: "RAE",
+        src: "images/exp/ablate_vae_rae.png",
+        alt: "Animal-Faces samples using RAE",
+        caption: "FID 10.63. Semantic high-dimensional RAE latents give the best samples."
+      }
+    ];
+
+    let autoencoderIndex = 0;
+    const autoencoderTitle = document.querySelector("#autoencoder-image-title");
+    const autoencoderImage = document.querySelector("#autoencoder-image");
+    const autoencoderCaption = document.querySelector("#autoencoder-caption");
+    const autoencoderDots = document.querySelectorAll(".autoencoder-dot");
+
+    function showAutoencoderSlide(index) {
+      autoencoderIndex = (index + autoencoderSlides.length) % autoencoderSlides.length;
+      const slide = autoencoderSlides[autoencoderIndex];
+
+      autoencoderImage.style.opacity = "0";
+      window.setTimeout(() => {
+        autoencoderTitle.textContent = slide.title;
+        autoencoderImage.src = slide.src;
+        autoencoderImage.alt = slide.alt;
+        autoencoderCaption.textContent = slide.caption;
+        autoencoderDots.forEach((dot, dotIndex) => {
+          dot.classList.toggle("active", dotIndex === autoencoderIndex);
+        });
+        autoencoderImage.style.opacity = "1";
+      }, 120);
+    }
+
+    document.querySelector("#autoencoder-prev").addEventListener("click", () => {
+      showAutoencoderSlide(autoencoderIndex - 1);
+    });
+
+    document.querySelector("#autoencoder-next").addEventListener("click", () => {
+      showAutoencoderSlide(autoencoderIndex + 1);
+    });
+
+    autoencoderDots.forEach((dot) => {
+      dot.addEventListener("click", () => {
+        showAutoencoderSlide(Number(dot.dataset.index));
+      });
+    });
+
+    const sixStepItems = [
+      { src: "images/appendix_6_steps/appendix_6.jpg", label: "class 0006: stingray" },
+      { src: "images/appendix_6_steps/appendix_14.jpg", label: "class 0014: indigo bunting" },
+      { src: "images/appendix_6_steps/appendix_22.jpg", label: "class 0022: bald eagle, American eagle" },
+      { src: "images/appendix_6_steps/appendix_42.jpg", label: "class 0042: agama" },
+      { src: "images/appendix_6_steps/appendix_48.jpg", label: "class 0048: Komodo dragon" },
+      { src: "images/appendix_6_steps/appendix_81.jpg", label: "class 0081: ptarmigan" },
+      { src: "images/appendix_6_steps/appendix_279.jpg", label: "class 0279: Arctic fox" },
+      { src: "images/appendix_6_steps/appendix_289.jpg", label: "class 0289: snow leopard" },
+      { src: "images/appendix_6_steps/appendix_349.jpg", label: "class 0349: bighorn sheep" },
+      { src: "images/appendix_6_steps/appendix_387.jpg", label: "class 0387: red panda" },
+      { src: "images/appendix_6_steps/appendix_437.jpg", label: "class 0437: beacon" },
+      { src: "images/appendix_6_steps/appendix_540.jpg", label: "class 0540: drilling platform" },
+      { src: "images/appendix_6_steps/appendix_649.jpg", label: "class 0649: megalith" },
+      { src: "images/appendix_6_steps/appendix_661.jpg", label: "class 0661: Model T" },
+      { src: "images/appendix_6_steps/appendix_672.jpg", label: "class 0672: mountain tent" },
+      { src: "images/appendix_6_steps/appendix_829.jpg", label: "class 0829: streetcar" },
+      { src: "images/appendix_6_steps/appendix_949.jpg", label: "class 0949: strawberry" },
+      { src: "images/appendix_6_steps/appendix_973.jpg", label: "class 0973: coral reef" },
+      { src: "images/appendix_6_steps/appendix_976.jpg", label: "class 0976: promontory" },
+      { src: "images/appendix_6_steps/appendix_980.jpg", label: "class 0980: volcano" }
+    ];
+
+    const sixStepSlides = [];
+    for (let i = 0; i < sixStepItems.length; i += 4) {
+      sixStepSlides.push(sixStepItems.slice(i, i + 4));
+    }
+
+    let sixStepIndex = 0;
+    const sixStepCount = document.querySelector("#sixstep-count");
+    const sixStepImages = [0, 1, 2, 3].map((index) => document.querySelector(`#sixstep-img-${index}`));
+    const sixStepCaptions = [0, 1, 2, 3].map((index) => document.querySelector(`#sixstep-caption-${index}`));
+
+    function showSixStepSlide(index) {
+      sixStepIndex = (index + sixStepSlides.length) % sixStepSlides.length;
+      const slide = sixStepSlides[sixStepIndex];
+      sixStepCount.textContent = `${sixStepIndex + 1} / ${sixStepSlides.length}`;
+
+      slide.forEach((item, itemIndex) => {
+        sixStepImages[itemIndex].src = item.src;
+        sixStepImages[itemIndex].alt = item.label;
+        sixStepCaptions[itemIndex].textContent = item.label;
+      });
+    }
+
+    document.querySelector("#sixstep-prev").addEventListener("click", () => {
+      showSixStepSlide(sixStepIndex - 1);
+    });
+
+    document.querySelector("#sixstep-next").addEventListener("click", () => {
+      showSixStepSlide(sixStepIndex + 1);
+    });
+
+    const qualitativeItems = [
+      { step: "4-step samples", src: "images/appendix/appendix_2.jpg", label: "class 0002: great white shark, white shark" },
+      { step: "4-step samples", src: "images/appendix/appendix_15.jpg", label: "class 0015: robin, American robin" },
+      { step: "4-step samples", src: "images/appendix/appendix_39.jpg", label: "class 0039: common iguana, iguana" },
+      { step: "4-step samples", src: "images/appendix/appendix_88.jpg", label: "class 0088: macaw" },
+      { step: "4-step samples", src: "images/appendix/appendix_90.jpg", label: "class 0090: lorikeet" },
+      { step: "4-step samples", src: "images/appendix/appendix_207.jpg", label: "class 0207: golden retriever" },
+      { step: "4-step samples", src: "images/appendix/appendix_277.jpg", label: "class 0277: red fox, Vulpes vulpes" },
+      { step: "4-step samples", src: "images/appendix/appendix_294.jpg", label: "class 0294: brown bear, bruin, Ursus arctos" },
+      { step: "4-step samples", src: "images/appendix/appendix_327.jpg", label: "class 0327: starfish, sea star" },
+      { step: "4-step samples", src: "images/appendix/appendix_360.jpg", label: "class 0360: otter" },
+      { step: "4-step samples", src: "images/appendix/appendix_425.jpg", label: "class 0425: barn" },
+      { step: "4-step samples", src: "images/appendix/appendix_449.jpg", label: "class 0449: boathouse" },
+      { step: "4-step samples", src: "images/appendix/appendix_483.jpg", label: "class 0483: castle" },
+      { step: "4-step samples", src: "images/appendix/appendix_562.jpg", label: "class 0562: fountain" },
+      { step: "4-step samples", src: "images/appendix/appendix_698.jpg", label: "class 0698: palace" },
+      { step: "4-step samples", src: "images/appendix/appendix_803.jpg", label: "class 0803: snowplow, snowplough" },
+      { step: "4-step samples", src: "images/appendix/appendix_873.jpg", label: "class 0873: triumphal arch" },
+      { step: "4-step samples", src: "images/appendix/appendix_957.jpg", label: "class 0957: pomegranate" },
+      { step: "4-step samples", src: "images/appendix/appendix_970.jpg", label: "class 0970: alp" },
+      { step: "4-step samples", src: "images/appendix/appendix_988.jpg", label: "class 0988: acorn" }
+    ];
+
+    const qualitativeSlides = [];
+    for (let i = 0; i < qualitativeItems.length; i += 4) {
+      qualitativeSlides.push(qualitativeItems.slice(i, i + 4));
+    }
+
+    let qualitativeIndex = 0;
+    const qualitativeTitle = document.querySelector("#qualitative-title");
+    const qualitativeCount = document.querySelector("#qualitative-count");
+    const qualitativeImages = [0, 1, 2, 3].map((index) => document.querySelector(`#qualitative-img-${index}`));
+    const qualitativeCaptions = [0, 1, 2, 3].map((index) => document.querySelector(`#qualitative-caption-${index}`));
+
+    function showQualitativeSlide(index) {
+      qualitativeIndex = (index + qualitativeSlides.length) % qualitativeSlides.length;
+      const slide = qualitativeSlides[qualitativeIndex];
+      qualitativeTitle.textContent = slide[0].step;
+      qualitativeCount.textContent = `${qualitativeIndex + 1} / ${qualitativeSlides.length}`;
+
+      slide.forEach((item, itemIndex) => {
+        qualitativeImages[itemIndex].src = item.src;
+        qualitativeImages[itemIndex].alt = item.label;
+        qualitativeCaptions[itemIndex].textContent = item.label;
+      });
+    }
+
+    document.querySelector("#qualitative-prev").addEventListener("click", () => {
+      showQualitativeSlide(qualitativeIndex - 1);
+    });
+
+    document.querySelector("#qualitative-next").addEventListener("click", () => {
+      showQualitativeSlide(qualitativeIndex + 1);
+    });
+  </script>
+</body>
+</html>
