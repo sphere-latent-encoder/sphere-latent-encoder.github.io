@@ -740,6 +740,41 @@
       text-transform: uppercase;
     }
 
+    .bibtex-card {
+      position: relative;
+    }
+
+    .bibtex-card pre {
+      margin: 0;
+      padding: 1.1rem 5.5rem 1.1rem 1.25rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.84rem;
+      line-height: 1.55;
+      color: var(--ink);
+      background: #f8fafc;
+      border-radius: calc(var(--radius) - 10px);
+    }
+
+    .copy-bibtex {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.45rem 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .copy-bibtex:hover {
+      border-color: rgba(37, 99, 235, 0.35);
+      color: var(--blue);
+    }
+
     .footer {
       margin-top: 3.5rem;
       padding-top: 1.5rem;
@@ -837,6 +872,7 @@
         <a href="#results">Results</a>
         <a href="#ablations">Ablations</a>
         <a href="#more-qualitative-results">Qualitative</a>
+        <a href="#citation">Citation</a>
       </div>
     </div>
   </nav>
@@ -859,7 +895,7 @@
           </svg>
           Code (soon)
         </span>
-        <a class="button" href="#" aria-label="arXiv link">
+        <a class="button" href="https://arxiv.org/abs/2605.15592" target="_blank" rel="noopener noreferrer" aria-label="arXiv paper">
           <span class="arxiv-mark" aria-hidden="true">arXiv</span>
           arXiv
         </a>
@@ -1516,6 +1552,24 @@
       </div>
     </section>
 
+    <section class="section" id="citation" aria-labelledby="citation-heading">
+      <div class="section-head">
+        <h2 id="citation-heading">Citation</h2>
+      </div>
+      <div class="card pad bibtex-card">
+        <button class="copy-bibtex" type="button" id="copy-bibtex" aria-label="Copy BibTeX to clipboard">Copy</button>
+        <pre id="bibtex">@misc{do2026efficientimagesynthesissphere,
+      title={Efficient Image Synthesis with Sphere Latent Encoder}, 
+      author={Tung Do and Thuan Hoang Nguyen and Hao Li},
+      year={2026},
+      eprint={2605.15592},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2605.15592}, 
+}</pre>
+      </div>
+    </section>
+
     <footer class="footer">
       Built as a static GitHub Pages project page. Figures and text are adapted from the accompanying manuscript.
     </footer>
@@ -1807,6 +1861,24 @@
 
     document.querySelector("#qualitative-next").addEventListener("click", () => {
       showQualitativeSlide(qualitativeIndex + 1);
+    });
+
+    const copyBibtexButton = document.querySelector("#copy-bibtex");
+    const bibtexBlock = document.querySelector("#bibtex");
+
+    copyBibtexButton.addEventListener("click", async () => {
+      const citation = bibtexBlock.textContent.trim();
+
+      try {
+        await navigator.clipboard.writeText(citation);
+        copyBibtexButton.textContent = "Copied";
+      } catch {
+        copyBibtexButton.textContent = "Copy failed";
+      }
+
+      window.setTimeout(() => {
+        copyBibtexButton.textContent = "Copy";
+      }, 1600);
     });
   </script>
 </body>
