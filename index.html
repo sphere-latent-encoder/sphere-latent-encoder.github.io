@@ -889,12 +889,16 @@
         Mohamed Bin Zayed University of Artificial Intelligence, UAE
       </div>
       <div class="actions">
-        <span class="button primary" aria-disabled="true">
+        <a class="button primary" href="https://github.com/ItsThanhTung/SphereLatent" target="_blank" rel="noopener noreferrer" aria-label="Code on GitHub">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
             <path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.09 3.29 9.4 7.86 10.93 0.58 0.1 0.79-0.25 0.79-0.56v-2.15c-3.2 0.7-3.87-1.36-3.87-1.36-0.52-1.33-1.28-1.68-1.28-1.68-1.04-0.71 0.08-0.7 0.08-0.7 1.15 0.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34 0.96 0.1-0.74 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.27-5.23-5.67 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.96-0.31 3.16 1.18 0.92-0.25 1.9-0.38 2.87-0.38s1.95 0.13 2.87 0.38c2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.73 0.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14v3.17c0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>
           </svg>
-          Code (soon)
-        </span>
+          Code
+        </a>
+        <a class="button" href="https://huggingface.co/itsthanhtung/SphereLatent" target="_blank" rel="noopener noreferrer" aria-label="Weights on Hugging Face">
+          <span aria-hidden="true">&#x1F917;</span>
+          Weights
+        </a>
         <a class="button" href="https://arxiv.org/abs/2605.15592" target="_blank" rel="noopener noreferrer" aria-label="arXiv paper">
           <span class="arxiv-mark" aria-hidden="true">arXiv</span>
           arXiv
@@ -1218,130 +1222,145 @@
           <p class="caption">G = GFLOPs. Lower is better.</p>
         </div>
 
-        <div class="grid-2" style="margin-top: 1rem;">
-          <div class="card pad">
-            <p class="small-title">ImageNet: 1-NFE + Sphere</p>
-            <div class="table-wrap">
-              <table class="compact-table">
-                <thead>
-                  <tr>
-                    <th>Model</th>
-                    <th>Param</th>
-                    <th>NFE</th>
-                    <th>FID</th>
-                    <th>CMMD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="table-group prior-method">
-                    <td colspan="5">1-NFE diffusion / flow</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>MeanFlow-XL/2</td>
-                    <td>676M</td>
-                    <td>1</td>
-                    <td>3.43</td>
-                    <td>0.575</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>\(\alpha\)-Flow-XL/2+</td>
-                    <td>676M</td>
-                    <td>1</td>
-                    <td>2.58</td>
-                    <td>0.520</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>iMF-XL/2</td>
-                    <td>610M</td>
-                    <td>1</td>
-                    <td>1.72</td>
-                    <td>0.384</td>
-                  </tr>
-                  <tr class="table-group">
-                    <td colspan="5">Sphere models</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>Sphere Enc.</td>
-                    <td>1.3B</td>
-                    <td>\(4\times2\)</td>
-                    <td>4.02</td>
-                    <td>0.363</td>
-                  </tr>
-                  <tr>
-                    <td class="ours">Ours-XL/1</td>
-                    <td>675M</td>
-                    <td>\(4\times2\)</td>
-                    <td>2.25</td>
-                    <td><strong>0.144</strong></td>
-                  </tr>
-                  <tr>
-                    <td class="ours">Ours-XL/1</td>
-                    <td>675M</td>
-                    <td>\(6\times2\)</td>
-                    <td><strong>2.11</strong></td>
-                    <td>0.147</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <div class="card pad" style="margin-top: 1rem;">
+          <p class="small-title">Class-conditional image generation on ImageNet-1K 256&times;256</p>
+          <div class="table-wrap">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>#Params</th>
+                  <th>NFE</th>
+                  <th>FID &darr;</th>
+                  <th>FDr<sup>6</sup> &darr;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-group prior-method">
+                  <td colspan="5">Multi-step diffusion / flow</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>SiT-XL/2</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>2.06</td>
+                  <td>8.44</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>SiT-XL/2 + REPA</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>1.42</td>
+                  <td>5.45</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>SiT-XL/2 + REG</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>1.36</td>
+                  <td>4.64</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>LightningDiT-XL/2</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>1.35</td>
+                  <td>4.57</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>REPA-E</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>1.15</td>
+                  <td>3.04</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>GAE</td>
+                  <td>675M</td>
+                  <td>\(250\times2\)</td>
+                  <td>1.13</td>
+                  <td>1.97</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>RAE + DiT-XL</td>
+                  <td>839M</td>
+                  <td>\(50\times2\)</td>
+                  <td>1.13</td>
+                  <td>3.26</td>
+                </tr>
+                <tr class="table-group prior-method">
+                  <td colspan="5">1-NFE diffusion / flow from scratch</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>MeanFlow-XL/2</td>
+                  <td>676M</td>
+                  <td>1</td>
+                  <td>3.43</td>
+                  <td>12.30</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>\(\alpha\)-Flow-XL/2+</td>
+                  <td>676M</td>
+                  <td>1</td>
+                  <td>2.58</td>
+                  <td>14.14</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>Drift-L</td>
+                  <td>463M</td>
+                  <td>1</td>
+                  <td>1.43</td>
+                  <td>10.51</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>iMF-XL/2</td>
+                  <td>610M</td>
+                  <td>1</td>
+                  <td>1.72</td>
+                  <td>8.39</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>iMF-XL/2 + FD-loss</td>
+                  <td>610M</td>
+                  <td>1</td>
+                  <td>0.76</td>
+                  <td>2.45</td>
+                </tr>
+                <tr class="table-group">
+                  <td colspan="5">Sphere models</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>Sphere Encoder</td>
+                  <td>1.3B</td>
+                  <td>\(4\times2\)</td>
+                  <td>4.02</td>
+                  <td>10.44</td>
+                </tr>
+                <tr class="prior-method">
+                  <td>Sphere Encoder 2</td>
+                  <td>487M</td>
+                  <td>\(4\times2\)</td>
+                  <td>2.86</td>
+                  <td>4.92</td>
+                </tr>
+                <tr>
+                  <td class="ours">Ours-XL/1</td>
+                  <td>675M</td>
+                  <td>\(4\times2\)</td>
+                  <td>2.25</td>
+                  <td>4.36</td>
+                </tr>
+                <tr>
+                  <td class="ours">Ours-XL/1</td>
+                  <td>675M</td>
+                  <td>\(6\times2\)</td>
+                  <td><strong>2.11</strong></td>
+                  <td><strong>4.08</strong></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-
-          <div class="card pad">
-            <p class="small-title">ImageNet: Multi-NFE</p>
-            <div class="table-wrap">
-              <table class="compact-table">
-                <thead>
-                  <tr>
-                    <th>Model</th>
-                    <th>Param</th>
-                    <th>NFE</th>
-                    <th>FID</th>
-                    <th>CMMD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="table-group prior-method">
-                    <td colspan="5">Multi-NFE diffusion / flow</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>SiT-XL/2 + REG</td>
-                    <td>675M</td>
-                    <td>\(250\times2\)</td>
-                    <td>1.36</td>
-                    <td>0.228</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>LightningDiT-XL/2</td>
-                    <td>675M</td>
-                    <td>\(250\times2\)</td>
-                    <td>1.35</td>
-                    <td>0.139</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>REPA-E</td>
-                    <td>675M</td>
-                    <td>\(250\times2\)</td>
-                    <td>1.15</td>
-                    <td>0.115</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>GAE</td>
-                    <td>675M</td>
-                    <td>\(250\times2\)</td>
-                    <td>1.13</td>
-                    <td>0.053</td>
-                  </tr>
-                  <tr class="prior-method">
-                    <td>RAE+DiT-XL</td>
-                    <td>839M</td>
-                    <td>\(50\times2\)</td>
-                    <td>1.13</td>
-                    <td>0.169</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <p class="caption">NFE &times;2 denotes classifier-free guidance. Lower FID and FDr<sup>6</sup> are better; FDr<sup>6</sup> of prior methods is taken from FD-loss (Yang et al., 2026). Bold marks the best result among sphere models.</p>
         </div>
       </div>
     </section>
