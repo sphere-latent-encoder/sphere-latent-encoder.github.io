@@ -957,7 +957,7 @@
     <section class="section" id="video" aria-label="Explainer video">
       <div class="card figure">
         <div class="vp-stage" id="vp-stage">
-          <video id="vp-va" class="on" src="videos/part_v6_0.mp4" poster="videos/poster.jpg" autoplay muted playsinline preload="auto"></video>
+          <video id="vp-va" class="on" src="videos/part_v8_0.mp4" poster="videos/poster.jpg" autoplay muted playsinline preload="auto"></video>
           <video id="vp-vb" muted playsinline preload="auto"></video>
           <div class="vp-bar" id="vp-bar">
             <button class="vp-btn" id="vp-play" type="button" aria-label="Pause video">
@@ -965,8 +965,8 @@
               <svg class="i-play" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
             </button>
             <span class="vp-time" id="vp-cur">0:00</span>
-            <input id="vp-seek" type="range" min="0" max="159.8644" step="0.01" value="0" aria-label="Seek video">
-            <span class="vp-time">2:40</span>
+            <input id="vp-seek" type="range" min="0" max="158.2971" step="0.01" value="0" aria-label="Seek video">
+            <span class="vp-time">2:38</span>
           </div>
         </div>
       </div>
@@ -1967,12 +1967,12 @@
     // Explainer video: four MP4 parts played as one looping timeline, swapping between two video elements.
     (() => {
       const PARTS = [
-        { src: "videos/part_v6_0.mp4", start: 0 },
-        { src: "videos/part_v6_1.mp4", start: 5.233 },
-        { src: "videos/part_v6_2.mp4", start: 100.8663 },
-        { src: "videos/part_v6_3.mp4", start: 145.8644 }
+        { src: "videos/part_v8_0.mp4", start: 0 },
+        { src: "videos/part_v8_1.mp4", start: 5.233 },
+        { src: "videos/part_v8_2.mp4", start: 99.699 },
+        { src: "videos/part_v8_3.mp4", start: 144.2971 }
       ];
-      const TOTAL = 159.8644;
+      const TOTAL = 158.2971;
       const $ = id => document.getElementById(id);
       const vids = [$("vp-va"), $("vp-vb")];
       const stage = $("vp-stage"), bar = $("vp-bar"), playBtn = $("vp-play"), seek = $("vp-seek"), cur = $("vp-cur");
