@@ -859,6 +859,83 @@
         padding-top: 1.4rem;
       }
     }
+
+    /* Explainer video player */
+    .vp { display: grid; gap: 0.7rem; }
+    .vp-stage {
+      position: relative; aspect-ratio: 16 / 9; background: #0b1437;
+      border-radius: calc(var(--radius) - 9px); overflow: hidden; cursor: pointer;
+    }
+    .vp-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #0b1437; opacity: 0; }
+    .vp-stage video.on { opacity: 1; }
+    .vp-cover { position: absolute; inset: 0; width: 100%; padding: 0; margin: 0; border: 0; background: #0b1437; cursor: pointer; display: block; }
+    .vp-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .vp-playpill {
+      position: absolute; left: 18px; bottom: 18px; display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 18px 10px 14px; border-radius: 999px; background: rgba(11, 20, 55, 0.86); color: #fff;
+      font: inherit; font-size: 1rem; font-weight: 700; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28); transition: transform 0.15s ease;
+    }
+    .vp-playpill .vp-pt { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; opacity: 0.8; }
+    .vp-cover:hover .vp-playpill { transform: translateY(-2px); }
+    .vp-msg {
+      position: absolute; left: 16px; right: 16px; bottom: 16px; margin: 0; padding: 10px 14px; border-radius: 10px;
+      background: rgba(11, 20, 55, 0.86); color: #fff; font-size: 0.9rem; cursor: default;
+    }
+    .vp-stage.loading::after {
+      content: ""; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+      border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff;
+      animation: vp-spin 0.8s linear infinite; pointer-events: none;
+    }
+    @keyframes vp-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .vp-stage.loading::after { animation-duration: 2.4s; }
+      .vp-playpill { transition: none; }
+    }
+    .vp-bar { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 14px; background: #f8fafc; }
+    .vp-ctl { flex: none; width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+    .vp-ctl:hover { background: var(--blue-soft); }
+    .vp-ctl .i-pause { display: none; }
+    .vp-ctl.is-playing .i-play { display: none; }
+    .vp-ctl.is-playing .i-pause { display: block; }
+    .vp-time { flex: none; min-width: 4.2ch; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .vp-track { position: relative; flex: 1; min-width: 0; height: 40px; display: flex; align-items: center; }
+    #vp-seek { width: 100%; height: 40px; margin: 0; background: transparent; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    #vp-seek::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--blue) var(--p, 0%), var(--line) var(--p, 0%)); }
+    #vp-seek::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -5px; border-radius: 50%; background: var(--blue); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--blue); }
+    #vp-seek::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+    #vp-seek::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--blue); }
+    #vp-seek::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--blue); border: 2px solid #fff; }
+    .vp-ticks { position: absolute; left: 8px; right: 8px; top: 50%; height: 6px; margin-top: -3px; pointer-events: none; }
+    .vp-ticks i { position: absolute; top: 0; width: 2px; height: 6px; margin-left: -1px; background: #f8fafc; }
+    .vp-ctl:focus-visible, .vp-cover:focus-visible, .vp-chap:focus-visible, #vp-seek:focus-visible, .vp-toggle input:focus-visible { outline: 3px solid #d97706; outline-offset: 2px; }
+    .vp-now { margin: 0 0.25rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-size: 0.95rem; }
+    .vp-now-k { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; color: var(--muted); }
+    .vp-now-t { font-weight: 700; }
+    .vp:fullscreen { background: #0b1437; display: flex; flex-direction: column; justify-content: center; padding: 16px; }
+    .vp:fullscreen .vp-stage { flex: 1; min-height: 0; aspect-ratio: auto; border-radius: 0; }
+    .vp:fullscreen .vp-now { color: #fff; }
+    .vp:-webkit-full-screen { background: #0b1437; display: flex; flex-direction: column; justify-content: center; padding: 16px; }
+    .vp:-webkit-full-screen .vp-stage { flex: 1; min-height: 0; aspect-ratio: auto; border-radius: 0; }
+    .vp-chapters { display: grid; gap: 0.6rem; margin-top: 1.2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+    .vp-ch-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+    .vp-ch-head h3 { margin: 0; }
+    .vp-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--muted); cursor: pointer; }
+    .vp-toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--blue); }
+    .vp-chs { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 28px; }
+    .vp-chs li { break-inside: avoid; padding-block: 2px; }
+    .vp-chs.show-vo { columns: 1; }
+    .vp-chap { width: 100%; display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); column-gap: 10px; align-items: baseline; padding: 7px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+    .vp-chap:hover { background: var(--blue-soft); }
+    .vp-chap .t { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .vp-chap .n { font-weight: 600; }
+    .vp-chap .vo { display: none; grid-column: 2; margin-top: 4px; max-width: 72ch; font-size: 0.92rem; line-height: 1.55; color: var(--muted); }
+    .show-vo .vp-chap .vo { display: block; }
+    .vp-chs li.cur .vp-chap { background: var(--blue-soft); }
+    .vp-chs li.cur .vp-chap .t { color: var(--blue); }
+    @media (max-width: 720px) {
+      .vp-chs { columns: 1; }
+      .vp-playpill { left: 12px; bottom: 12px; padding: 8px 14px 8px 12px; font-size: 0.95rem; }
+    }
   </style>
   <script>
     window.MathJax = {
@@ -873,6 +950,7 @@
     <div class="nav-inner">
       <a class="brand" href="#">Sphere Latent Encoder</a>
       <div class="nav-links">
+        <a href="#video">Video</a>
         <a href="#abstract">Abstract</a>
         <a href="#method">Method</a>
         <a href="#results">Results</a>
@@ -912,6 +990,63 @@
         </a>
       </div>
     </header>
+
+    <section class="section" id="video">
+      <div class="section-head">
+        <h2>Video</h2>
+      </div>
+      <div class="card pad">
+        <div class="vp" id="vp" aria-label="Video player">
+          <div class="vp-stage" id="vp-stage">
+            <video id="vp-va" class="on" muted playsinline preload="none"></video>
+            <video id="vp-vb" muted playsinline preload="none"></video>
+            <button class="vp-cover" id="vp-cover" type="button" aria-label="Play the video">
+              <img src="videos/poster.jpg" width="1280" height="720" loading="lazy" alt="Title card: Efficient Image Synthesis with Sphere Latent Encoder, with a strip of generated samples">
+              <span class="vp-playpill"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Play video <span class="vp-pt">2:40</span></span>
+            </button>
+            <p class="vp-msg" id="vp-msg" role="status" hidden></p>
+          </div>
+          <div class="vp-bar">
+            <button class="vp-ctl" id="vp-play" type="button" aria-label="Play">
+              <svg class="i-play" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5v14l11.5-7z" fill="currentColor"/></svg>
+              <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z" fill="currentColor"/></svg>
+            </button>
+            <span class="vp-time" id="vp-cur">0:00</span>
+            <div class="vp-track">
+              <input id="vp-seek" type="range" min="0" max="159.8644" step="0.01" value="0" aria-label="Seek">
+              <div class="vp-ticks" id="vp-ticks" aria-hidden="true"></div>
+            </div>
+            <span class="vp-time">2:40</span>
+            <button class="vp-ctl" id="vp-fs" type="button" aria-label="Full screen">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+            </button>
+          </div>
+          <p class="vp-now"><span class="vp-now-k" id="vp-now-k">Chapter 1 of 13</span><span class="vp-now-t" id="vp-now-t">Globe of samples</span></p>
+        </div>
+
+        <div class="vp-chapters" aria-labelledby="vp-ch-h">
+          <div class="vp-ch-head">
+            <h3 id="vp-ch-h">Chapters</h3>
+            <label class="vp-toggle"><input type="checkbox" id="vp-script"> Show narration script</label>
+          </div>
+          <ol class="vp-chs" id="vp-chlist">
+            <li><button class="vp-chap" type="button" data-t="0.0000"><span class="t">0:00</span><span class="n">Globe of samples</span><span class="vo">Every image on this globe was generated by our model.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="5.2330"><span class="t">0:05</span><span class="n">Title</span><span class="vo">Efficient Image Synthesis with Sphere Latent Encoder, at NeurIPS 2026.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="11.2997"><span class="t">0:11</span><span class="n">Few-step generators and their limits</span><span class="vo">Diffusion needs hundreds of network evaluations. Consistency and MeanFlow models need only a few, but are often unstable to train and hard to scale.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="20.8997"><span class="t">0:20</span><span class="n">Sphere Encoder vs. ours</span><span class="vo">Sphere Encoder makes good images in a few steps, but every step decodes back to pixels and re-encodes, and one network must handle both reconstruction and generation. We keep generation in latent space instead: a dedicated model denoises on the sphere, and the decoder runs only once. That cuts compute from about 13,300 to about 2,050 GFLOPs.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="46.1663"><span class="t">0:46</span><span class="n">Decoupled, efficient, stable</span><span class="vo">Three ideas make this work: decoupling reconstruction from generation, denoising directly in latent space, and a stable objective with no JVP.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="56.4663"><span class="t">0:56</span><span class="n">Training in spherical latent space</span><span class="vo">A frozen RAE encodes the image into z, and spherify maps z onto the sphere as v. We add light and heavy noise to v and project both copies back onto the sphere. One shared transformer, G, denoises both. The reconstruction loss pulls the light-noise prediction toward z, and the consistency loss matches the heavy-noise prediction to the frozen light-noise one, with no JVP.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="82.4663"><span class="t">1:22</span><span class="n">Sampling in four steps</span><span class="vo">To sample, start from Gaussian noise. Each step projects onto the sphere, denoises with optional classifier-free guidance, reprojects, and adds a little decayed noise. Then we decode once.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="96.6663"><span class="t">1:36</span><span class="n">Animal-Faces and Oxford-Flowers</span><span class="vo">On Animal-Faces and Oxford-Flowers, our 130M model beats Sphere Encoder&#x27;s FID with eleven to sixteen times fewer GFLOPs.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="105.9663"><span class="t">1:45</span><span class="n">ImageNet-1K results</span><span class="vo">On ImageNet, we reach FID 2.25 in four steps and 2.11 in six: the best sphere model, and near SiT-XL/2 with 42 times fewer evaluations.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="116.3311"><span class="t">1:56</span><span class="n">Same classes, 4 steps</span><span class="vo">Here are the same classes at four steps: Sphere Encoder on the left, ours on the right.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="124.5311"><span class="t">2:04</span><span class="n">Ablations: steps and tokenizer</span><span class="vo">More steps help, with most of the gain by four. And the tokenizer matters: semantic RAE latents far outperform FLUX VAE latents.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="135.8644"><span class="t">2:15</span><span class="n">Ablations: spherify, losses, noise</span><span class="vo">Spherical projection is essential, the consistency loss strongly improves FID, and a stronger log-normal noise schedule helps further.</span></button></li>
+            <li><button class="vp-chap" type="button" data-t="144.5644"><span class="t">2:24</span><span class="n">Samples and links</span><span class="vo">Sphere Latent Encoder: few-step image synthesis that stays on the sphere. The paper, code and weights are linked on our project page.</span></button></li>
+          </ol>
+        </div>
+      </div>
+    </section>
 
     <section class="section" aria-label="Generated image samples">
       <div class="card figure teaser-card">
@@ -1903,6 +2038,203 @@
         copyBibtexButton.textContent = "Copy";
       }, 1600);
     });
+  </script>
+  <script>
+    // Explainer video: four MP4 parts played back-to-back as one seekable timeline.
+    (() => {
+      "use strict";
+      const PARTS = [
+        { src: "videos/part_v6_0.mp4", start: 0.0 },
+        { src: "videos/part_v6_1.mp4", start: 5.233 },
+        { src: "videos/part_v6_2.mp4", start: 100.8663 },
+        { src: "videos/part_v6_3.mp4", start: 145.8644 }
+      ];
+      const TOTAL = 159.8644;
+      const $ = id => document.getElementById(id);
+      const vids = [$("vp-va"), $("vp-vb")];
+      const player = $("vp"), stage = $("vp-stage"), cover = $("vp-cover"), msg = $("vp-msg");
+      const playBtn = $("vp-play"), fsBtn = $("vp-fs"), seek = $("vp-seek"), cur = $("vp-cur");
+      const nowK = $("vp-now-k"), nowT = $("vp-now-t"), list = $("vp-chlist");
+      const chapters = Array.from(list.querySelectorAll(".vp-chap")).map(b => ({
+        b, li: b.parentElement, t: parseFloat(b.dataset.t), name: b.querySelector(".n").textContent
+      }));
+      const reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      let active = 0, part = 0, wantPlay = false, dragging = false, raf = 0, curCh = -1, finished = false;
+
+      const fmt = s => { s = Math.max(0, Math.floor(s + 1e-6)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+      const TOTAL_TXT = fmt(Math.round(TOTAL));
+      const partAt = t => { let i = PARTS.length - 1; while (i > 0 && t < PARTS[i].start - 1e-3) i--; return i; };
+      const act = () => vids[active];
+      const now = () => finished ? TOTAL : PARTS[part].start + (act().currentTime || 0);
+
+      const ticks = $("vp-ticks");
+      chapters.slice(1).forEach(c => {
+        const m = document.createElement("i");
+        m.style.left = (c.t / TOTAL * 100).toFixed(3) + "%";
+        ticks.appendChild(m);
+      });
+
+      function ready(v, i) {
+        const tok = (v._tok = (v._tok || 0) + 1);
+        return new Promise(res => {
+          const same = v.dataset.part === String(i) && !v.error && !!v.getAttribute("src");
+          if (same && v.readyState >= 1) { res(true); return; }
+          const finish = ok => {
+            v.removeEventListener("loadedmetadata", onMeta);
+            v.removeEventListener("error", onErr);
+            res(ok && v._tok === tok);
+          };
+          const onMeta = () => finish(true);
+          const onErr = () => finish(false);
+          v.addEventListener("loadedmetadata", onMeta);
+          v.addEventListener("error", onErr);
+          if (!same) {
+            v.dataset.part = String(i);
+            v.preload = "auto";
+            v.src = PARTS[i].src;
+            v.load();
+          }
+        });
+      }
+
+      let chain = Promise.resolve();
+      function goTo(t, play) {
+        chain = chain.then(() => go(t, play), () => go(t, play));
+        return chain;
+      }
+
+      async function go(t, play) {
+        if (play === null) play = wantPlay;
+        finished = false;
+        t = Math.min(Math.max(0, t), TOTAL - 0.05);
+        const i = partAt(t);
+        let v = act();
+        if (v.dataset.part !== String(i) || v.readyState < 1) {
+          const o = vids[1 - active];
+          if (o.dataset.part === String(i) && !o.error) v = o;
+          stage.classList.add("loading");
+          const ok = await ready(v, i);
+          stage.classList.remove("loading");
+          if (!ok) { fail(); return; }
+          if (v !== act()) {
+            act().pause();
+            act().classList.remove("on");
+            active = vids.indexOf(v);
+            v.classList.add("on");
+          }
+        }
+        part = i;
+        msg.hidden = true;
+        cover.hidden = true;
+        const off = Math.max(0, t - PARTS[i].start);
+        if (Math.abs((v.currentTime || 0) - off) > 0.04) { try { v.currentTime = off; } catch (e) { /* keep position */ } }
+        if (play) {
+          wantPlay = true;
+          try { await v.play(); } catch (e) { wantPlay = false; }
+        } else {
+          wantPlay = false;
+          v.pause();
+        }
+        preloadNext();
+        render();
+        if (wantPlay) startLoop();
+      }
+
+      function preloadNext() {
+        const n = part + 1;
+        if (n >= PARTS.length) return;
+        const o = vids[1 - active];
+        if (o.dataset.part !== String(n) || o.error) ready(o, n);
+      }
+
+      function fail() {
+        wantPlay = false;
+        msg.textContent = "This part of the video didn't load. Check your connection, then press Play to try again.";
+        msg.hidden = false;
+        render();
+      }
+
+      function onEnded(v) {
+        if (v !== act()) return;
+        if (part < PARTS.length - 1) { goTo(PARTS[part + 1].start + 0.001, true); return; }
+        wantPlay = false;
+        finished = true;
+        cover.hidden = false;
+        render();
+      }
+
+      function toggle() {
+        const v = act();
+        if (wantPlay && !v.paused) { wantPlay = false; v.pause(); render(); return; }
+        goTo(finished ? 0 : now(), true);
+      }
+
+      function paint(t) { seek.style.setProperty("--p", (t / TOTAL * 100).toFixed(3) + "%"); }
+
+      function render() {
+        const t = now();
+        if (!dragging) { seek.value = String(t); paint(t); cur.textContent = finished ? TOTAL_TXT : fmt(t); }
+        const playing = wantPlay && !act().paused;
+        playBtn.classList.toggle("is-playing", playing);
+        playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+        let c = 0;
+        for (let k = 0; k < chapters.length; k++) if (t >= chapters[k].t - 0.02) c = k;
+        if (c !== curCh) {
+          if (curCh >= 0) { chapters[curCh].li.classList.remove("cur"); chapters[curCh].b.removeAttribute("aria-current"); }
+          chapters[c].li.classList.add("cur");
+          chapters[c].b.setAttribute("aria-current", "true");
+          nowK.textContent = "Chapter " + (c + 1) + " of " + chapters.length;
+          nowT.textContent = chapters[c].name;
+          curCh = c;
+        }
+        seek.setAttribute("aria-valuetext", (finished ? TOTAL_TXT : fmt(t)) + " of " + TOTAL_TXT + ", " + chapters[c].name);
+      }
+
+      function startLoop() { if (!raf) raf = requestAnimationFrame(loop); }
+      function loop() {
+        raf = 0;
+        render();
+        if (wantPlay && !act().paused) raf = requestAnimationFrame(loop);
+      }
+
+      vids.forEach(v => {
+        v.addEventListener("ended", () => onEnded(v));
+        v.addEventListener("playing", () => { if (v === act()) { stage.classList.remove("loading"); startLoop(); } });
+        v.addEventListener("waiting", () => { if (v === act() && wantPlay) stage.classList.add("loading"); });
+        v.addEventListener("pause", () => { if (v === act()) render(); });
+      });
+      playBtn.addEventListener("click", toggle);
+      cover.addEventListener("click", toggle);
+      stage.addEventListener("click", e => { if (!cover.contains(e.target) && !msg.contains(e.target)) toggle(); });
+
+      seek.addEventListener("input", () => { dragging = true; const t = +seek.value; paint(t); cur.textContent = fmt(t); });
+      seek.addEventListener("change", () => { dragging = false; goTo(+seek.value, null); });
+
+      chapters.forEach(c => c.b.addEventListener("click", () => {
+        goTo(c.t + 0.001, true);
+        const r = stage.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight) stage.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+      }));
+
+      $("vp-script").addEventListener("change", e => list.classList.toggle("show-vo", e.target.checked));
+
+      const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+      fsBtn.addEventListener("click", () => {
+        if (fsEl()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+        const native = () => {
+          const v = act();
+          if (v.webkitEnterFullscreen && v.readyState >= 1) { try { v.webkitEnterFullscreen(); } catch (e) { /* not available */ } }
+        };
+        const req = player.requestFullscreen || player.webkitRequestFullscreen;
+        if (!req) { native(); return; }
+        try { const p = req.call(player); if (p && p.catch) p.catch(native); } catch (e) { native(); }
+      });
+      const fsLabel = () => fsBtn.setAttribute("aria-label", fsEl() ? "Exit full screen" : "Full screen");
+      document.addEventListener("fullscreenchange", fsLabel);
+      document.addEventListener("webkitfullscreenchange", fsLabel);
+
+      render();
+    })();
   </script>
 </body>
 </html>
