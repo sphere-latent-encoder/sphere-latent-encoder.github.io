@@ -860,13 +860,45 @@
       }
     }
 
-    /* Explainer video: autoplaying, looping, no controls */
+    /* Explainer video: autoplays and loops; overlay bar with play/pause and a seek bar */
     .vp-stage {
       position: relative; aspect-ratio: 16 / 9; background: #0b1437;
-      border-radius: calc(var(--radius) - 9px); overflow: hidden;
+      border-radius: calc(var(--radius) - 9px); overflow: hidden; cursor: pointer;
     }
     .vp-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #0b1437; opacity: 0; }
     .vp-stage video.on { opacity: 1; }
+    .vp-bar {
+      position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px;
+      padding: 28px 14px 10px; color: #fff; cursor: default;
+      background: linear-gradient(to top, rgba(11, 20, 55, 0.78), rgba(11, 20, 55, 0));
+      transition: opacity 0.2s ease;
+    }
+    @media (hover: hover) {
+      .vp-stage:not(.paused):not(:hover):not(:focus-within) .vp-bar { opacity: 0; }
+    }
+    .vp-btn { flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 999px; display: grid; place-items: center; color: #fff; background: transparent; cursor: pointer; }
+    .vp-btn:hover { background: rgba(255, 255, 255, 0.16); }
+    .vp-btn .i-play { display: none; }
+    .vp-stage.paused .vp-btn .i-play { display: block; }
+    .vp-stage.paused .vp-btn .i-pause { display: none; }
+    .vp-time { flex: none; min-width: 4.2ch; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; font-variant-numeric: tabular-nums; opacity: 0.9; }
+    #vp-seek { flex: 1; min-width: 0; height: 32px; margin: 0; background: transparent; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    #vp-seek::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: linear-gradient(to right, #fff var(--p, 0%), rgba(255, 255, 255, 0.35) var(--p, 0%)); }
+    #vp-seek::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -4.5px; border-radius: 50%; background: #fff; }
+    #vp-seek::-moz-range-track { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.35); }
+    #vp-seek::-moz-range-progress { height: 5px; border-radius: 3px; background: #fff; }
+    #vp-seek::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: #fff; }
+    .vp-btn:focus-visible, #vp-seek:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+    .vp-stage.loading::after {
+      content: ""; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+      border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff;
+      animation: vp-spin 0.8s linear infinite; pointer-events: none;
+    }
+    @keyframes vp-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .vp-bar { transition: none; }
+      .vp-stage.loading::after { animation-duration: 2.4s; }
+    }
   </style>
   <script>
     window.MathJax = {
@@ -924,9 +956,18 @@
 
     <section class="section" id="video" aria-label="Explainer video">
       <div class="card figure">
-        <div class="vp-stage">
+        <div class="vp-stage" id="vp-stage">
           <video id="vp-va" class="on" src="videos/part_v6_0.mp4" poster="videos/poster.jpg" autoplay muted playsinline preload="auto"></video>
           <video id="vp-vb" muted playsinline preload="auto"></video>
+          <div class="vp-bar" id="vp-bar">
+            <button class="vp-btn" id="vp-play" type="button" aria-label="Pause video">
+              <svg class="i-pause" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z" fill="currentColor"/></svg>
+              <svg class="i-play" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            </button>
+            <span class="vp-time" id="vp-cur">0:00</span>
+            <input id="vp-seek" type="range" min="0" max="159.8644" step="0.01" value="0" aria-label="Seek video">
+            <span class="vp-time">2:40</span>
+          </div>
         </div>
       </div>
     </section>
@@ -1923,26 +1964,111 @@
     });
   </script>
   <script>
-    // Explainer video: four MP4 parts played back-to-back in a loop, swapping between two video elements.
+    // Explainer video: four MP4 parts played as one looping timeline, swapping between two video elements.
     (() => {
-      const PARTS = ["videos/part_v6_0.mp4", "videos/part_v6_1.mp4", "videos/part_v6_2.mp4", "videos/part_v6_3.mp4"];
-      const vids = [document.getElementById("vp-va"), document.getElementById("vp-vb")];
-      let active = 0, part = 0;
-      const load = (v, i) => { v.src = PARTS[i]; v.load(); };
-      const tryPlay = v => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-      load(vids[1], 1);
-      vids.forEach(v => v.addEventListener("ended", () => {
-        if (v !== vids[active]) return;
-        const next = vids[1 - active];
-        part = (part + 1) % PARTS.length;
-        next.currentTime = 0;
-        tryPlay(next);
-        next.classList.add("on");
-        v.classList.remove("on");
-        active = 1 - active;
-        load(v, (part + 1) % PARTS.length);
-      }));
-      tryPlay(vids[0]);
+      const PARTS = [
+        { src: "videos/part_v6_0.mp4", start: 0 },
+        { src: "videos/part_v6_1.mp4", start: 5.233 },
+        { src: "videos/part_v6_2.mp4", start: 100.8663 },
+        { src: "videos/part_v6_3.mp4", start: 145.8644 }
+      ];
+      const TOTAL = 159.8644;
+      const $ = id => document.getElementById(id);
+      const vids = [$("vp-va"), $("vp-vb")];
+      const stage = $("vp-stage"), bar = $("vp-bar"), playBtn = $("vp-play"), seek = $("vp-seek"), cur = $("vp-cur");
+      let active = 0, part = 0, wantPlay = true, dragging = false, raf = 0;
+
+      vids[0].dataset.part = "0";
+      const fmt = t => { t = Math.max(0, Math.floor(t + 1e-6)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+      const partAt = t => { let i = PARTS.length - 1; while (i > 0 && t < PARTS[i].start - 1e-3) i--; return i; };
+      const act = () => vids[active];
+      const now = () => PARTS[part].start + (act().currentTime || 0);
+
+      // Load part i into v; resolves true once it can seek.
+      function ready(v, i) {
+        return new Promise(res => {
+          if (v.dataset.part === String(i) && !v.error && v.readyState >= 1) { res(true); return; }
+          const done = ok => { v.removeEventListener("loadedmetadata", onOk); v.removeEventListener("error", onErr); res(ok); };
+          const onOk = () => done(true), onErr = () => done(false);
+          v.addEventListener("loadedmetadata", onOk);
+          v.addEventListener("error", onErr);
+          if (v.dataset.part !== String(i)) { v.dataset.part = String(i); v.src = PARTS[i].src; v.load(); }
+        });
+      }
+
+      let chain = Promise.resolve();
+      const goTo = (t, play) => (chain = chain.then(() => go(t, play), () => go(t, play)));
+
+      async function go(t, play) {
+        t = Math.min(Math.max(0, t), TOTAL - 0.05);
+        const i = partAt(t);
+        let v = act();
+        if (v.dataset.part !== String(i) || v.readyState < 1) {
+          const o = vids[1 - active];
+          if (o.dataset.part === String(i) && !o.error) v = o;
+          stage.classList.add("loading");
+          const ok = await ready(v, i);
+          stage.classList.remove("loading");
+          if (!ok) return;
+          if (v !== act()) {
+            act().pause();
+            act().classList.remove("on");
+            active = vids.indexOf(v);
+            v.classList.add("on");
+          }
+        }
+        part = i;
+        try { v.currentTime = Math.max(0, t - PARTS[i].start); } catch (e) { /* keep position */ }
+        wantPlay = play;
+        if (play) { const p = v.play(); if (p && p.catch) p.catch(() => { wantPlay = false; render(); }); }
+        else v.pause();
+        preloadNext();
+        render();
+      }
+
+      function preloadNext() {
+        const n = (part + 1) % PARTS.length, o = vids[1 - active];
+        if (o.dataset.part !== String(n) || o.error) ready(o, n);
+      }
+
+      function render() {
+        const t = now();
+        if (!dragging) {
+          seek.value = String(t);
+          seek.style.setProperty("--p", (t / TOTAL * 100).toFixed(3) + "%");
+          cur.textContent = fmt(t);
+        }
+        const paused = !wantPlay;
+        stage.classList.toggle("paused", paused);
+        playBtn.setAttribute("aria-label", paused ? "Play video" : "Pause video");
+      }
+      const loop = () => { render(); raf = requestAnimationFrame(loop); };
+
+      vids.forEach(v => {
+        v.addEventListener("ended", () => {
+          if (v !== act()) return;
+          goTo(part < PARTS.length - 1 ? PARTS[part + 1].start + 0.001 : 0, true); // loop back to the start
+        });
+        v.addEventListener("waiting", () => { if (v === act() && wantPlay) stage.classList.add("loading"); });
+        v.addEventListener("playing", () => { if (v === act()) stage.classList.remove("loading"); });
+      });
+
+      const toggle = () => goTo(now(), !wantPlay);
+      playBtn.addEventListener("click", toggle);
+      stage.addEventListener("click", e => { if (!bar.contains(e.target)) toggle(); });
+      seek.addEventListener("input", () => {
+        dragging = true;
+        const t = +seek.value;
+        seek.style.setProperty("--p", (t / TOTAL * 100).toFixed(3) + "%");
+        cur.textContent = fmt(t);
+      });
+      seek.addEventListener("change", () => { dragging = false; goTo(+seek.value, wantPlay); });
+
+      // Autoplay (muted); if the browser blocks it, the bar shows a Play button.
+      const first = vids[0].play();
+      if (first && first.catch) first.catch(() => { wantPlay = false; render(); });
+      preloadNext();
+      raf = requestAnimationFrame(loop);
     })();
   </script>
 </body>
