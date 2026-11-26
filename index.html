@@ -958,7 +958,7 @@
       <div class="card figure">
         <div class="vp-stage" id="vp-stage">
           <video id="vp-va" class="on" src="videos/part_v8_0.mp4" poster="videos/poster.jpg" autoplay muted playsinline preload="auto"></video>
-          <video id="vp-vb" muted playsinline preload="auto"></video>
+          <video id="vp-vb" muted playsinline preload="none"></video>
           <div class="vp-bar" id="vp-bar">
             <button class="vp-btn" id="vp-play" type="button" aria-label="Pause video">
               <svg class="i-pause" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z" fill="currentColor"/></svg>
@@ -1992,7 +1992,7 @@
           const onOk = () => done(true), onErr = () => done(false);
           v.addEventListener("loadedmetadata", onOk);
           v.addEventListener("error", onErr);
-          if (v.dataset.part !== String(i)) { v.dataset.part = String(i); v.src = PARTS[i].src; v.load(); }
+          if (v.dataset.part !== String(i)) { v.dataset.part = String(i); v.preload = "auto"; v.src = PARTS[i].src; v.load(); }
         });
       }
 
@@ -2026,9 +2026,15 @@
         render();
       }
 
+      // Fetch the next clip only once the current one can play through, so the two don't compete for bandwidth.
       function preloadNext() {
-        const n = (part + 1) % PARTS.length, o = vids[1 - active];
-        if (o.dataset.part !== String(n) || o.error) ready(o, n);
+        const v = act();
+        const run = () => {
+          if (v !== act()) return;
+          const n = (part + 1) % PARTS.length, o = vids[1 - active];
+          if (o.dataset.part !== String(n) || o.error) ready(o, n);
+        };
+        if (v.readyState >= 4) run(); else v.addEventListener("canplaythrough", run, { once: true });
       }
 
       function render() {
